@@ -22,8 +22,8 @@
     async function loadTrackData() {
       try {
         const apiKey = "openbikecle";
-        // Remplace par l'URL réelle de ton API (via tunnel SSH ou IP publique)
-        const apiUrl = "http://localhost:5000/api/measurements";
+        const apiUrl = "https://lilied-subprofessionally-mafalda.ngrok-free.app/api/measurements";
+
 
         const response = await fetch(apiUrl, {
           headers: { "X-API-KEY": apiKey },
