@@ -18,31 +18,38 @@
     const map = L.map("map").setView([43.6001, 1.4419], 13);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-    // Fonction asynchrone pour récupérer et afficher les données
+    // Fonction pour afficher les tracks
     async function loadTrackData() {
       try {
-        const apiKey = "openbikecle"; // À remplacer par une gestion sécurisée si nécessaire
-        const response = await fetch("http://localhost:8000/api/measurements", {
+        const apiKey = "openbikecle";
+        // Remplace par l'URL réelle de ton API (via tunnel SSH ou IP publique)
+        const apiUrl = "http://localhost:5000/api/measurements";
+
+        const response = await fetch(apiUrl, {
           headers: { "X-API-KEY": apiKey },
         });
+
         if (!response.ok) throw new Error("Erreur API");
         const trackData = await response.json();
 
-        // Ajoute les marqueurs sur la carte
+        // Affiche les tracks sur la carte
+        const trackCoordinates = trackData.map(point => L.latLng(point.lat, point.lng));
+        L.polyline(trackCoordinates, { color: 'blue' }).addTo(map);
+
+        // Ajoute des marqueurs pour chaque point
         trackData.forEach(point => {
           L.marker([point.lat, point.lng]).addTo(map)
             .bindPopup(`Vitesse: ${point.speed_kmh} km/h`);
         });
+
       } catch (error) {
         console.error("Erreur:", error);
         alert("Impossible de charger les données. Vérifie que ton API est accessible.");
       }
     }
 
-    // Appel de la fonction asynchrone
+    // Appel de la fonction
     loadTrackData();
   </script>
 </body>
 </html>
-
-

@@ -2,11 +2,11 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Bike Tracker</title>
+  <title>Open Bike Sensor</title>
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-  <h1>Bike Tracker</h1>
+  <h1>Open Bike Sensor</h1>
   <div class="tabs">
     <button onclick="openTab('maps')">Carte</button>
     <button onclick="openTab('tracks')">Traces</button>
@@ -27,7 +27,16 @@
     <iframe src="compte.html" style="width: 100%; height: 500px; border: none;"></iframe>
   </div>
 
-  <script src="assets/js/app.js"></script>
+  <script>
+    function openTab(tabName) {
+      const tabs = document.getElementsByClassName("tab-content");
+      for (let i = 0; i < tabs.length; i++) {
+        tabs[i].style.display = "none";
+      }
+      document.getElementById(tabName).style.display = "block";
+    }
+  </script>
 </body>
 </html>
+
 
