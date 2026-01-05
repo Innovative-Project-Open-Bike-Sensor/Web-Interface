@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Carte</title>
+  <title>Carte des trajets</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <style>
     #map { height: 500px; }
@@ -13,16 +13,36 @@
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  <script src="../assets/js/app.js"></script>
   <script>
     // Initialisation de la carte
     const map = L.map("map").setView([43.6001, 1.4419], 13);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-    // Exemple : Ajoute un marqueur (à remplacer par tes données)
-    L.marker([43.6001, 1.4419]).addTo(map)
-      .bindPopup("Vitesse : 25.4 km/h");
+    // Fonction asynchrone pour récupérer et afficher les données
+    async function loadTrackData() {
+      try {
+        const apiKey = "openbikecle"; // À remplacer par une gestion sécurisée si nécessaire
+        const response = await fetch("http://localhost:8000/api/measurements", {
+          headers: { "X-API-KEY": apiKey },
+        });
+        if (!response.ok) throw new Error("Erreur API");
+        const trackData = await response.json();
+
+        // Ajoute les marqueurs sur la carte
+        trackData.forEach(point => {
+          L.marker([point.lat, point.lng]).addTo(map)
+            .bindPopup(`Vitesse: ${point.speed_kmh} km/h`);
+        });
+      } catch (error) {
+        console.error("Erreur:", error);
+        alert("Impossible de charger les données. Vérifie que ton API est accessible.");
+      }
+    }
+
+    // Appel de la fonction asynchrone
+    loadTrackData();
   </script>
 </body>
 </html>
+
 
