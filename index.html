@@ -7,10 +7,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
+<body class="main-page">
   <header>
     <nav>
-      <span class="logo">Open Bike Sensor</span> | 
+      <span class="logo" onclick="openTab('home')">Open Bike Sensor</span> | 
       <a onclick="openTab('maps')" class="nav-link">Maps</a> | 
       <a onclick="openTab('tracks')" class="nav-link">Tracks</a> | 
       <a onclick="openTab('import')" class="nav-link">Import</a>
@@ -18,11 +18,10 @@
     <button onclick="openTab('account')" class="account-btn"><i class="fas fa-user"></i> Account</button>
   </header>
 
-  <div class="welcome">
+  <div id="home" class="tab-content welcome">
     <p>Welcome to our adaptation of the OpenBikeSensor project! This is the Innovative project of four students from 5ISS at INSA Toulouse.</p>
   </div>
-
-  <div id="maps" class="tab-content">
+  <div id="maps" class="tab-content" style="display: none;">
     <iframe src="maps.html" style="width: 100%; height: 600px; border: none;"></iframe>
   </div>
   <div id="tracks" class="tab-content" style="display: none;">
