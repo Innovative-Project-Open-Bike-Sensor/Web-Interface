@@ -91,10 +91,20 @@ function showTrace(trace) {
 
   // points
   trace.forEach(p => {
+    const pointColor = p.speed_kmh > 30 ? 'red' : 'green';
     L.circleMarker([p.lat, p.lng], {
       radius: 4,
+      fillColor: pointColor,
+      color: pointColor,
       fillOpacity: 0.9
-    }).addTo(map);
+    })
+    .addTo(map)
+    .bindPopup(`
+      <strong>Date</strong>: ${p.day}/${p.month}/${p.year}<br>
+      <strong>Heure</strong>: ${p.hour}:${p.minute}:${p.second}<br>
+      <strong>Vitesse</strong>: ${p.speed_kmh.toFixed(1)} km/h<br>
+      <strong>Distance</strong>: ${p.distanceMin_cm} cm
+    `);
   });
 
   map.fitBounds(currentLayer.getBounds());
