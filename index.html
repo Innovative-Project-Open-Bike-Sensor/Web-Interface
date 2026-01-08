@@ -4,14 +4,16 @@
   <meta charset="UTF-8">
   <title>Open Bike Sensor</title>
   <link rel="stylesheet" href="assets/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
   <h1>Open Bike Sensor</h1>
   <div class="tabs">
-    <button onclick="openTab('maps')">Map</button>
-    <button onclick="openTab('tracks')">Tracks</button>
-    <button onclick="openTab('import')">Import</button>
-    <button onclick="openTab('compte')">Account</button>
+    <button onclick="openTab('maps')" class="tab-button active"><i class="fas fa-map-marked-alt"></i> Carte</button>
+    <button onclick="openTab('tracks')" class="tab-button"><i class="fas fa-route"></i> Trajets</button>
+    <button onclick="openTab('import')" class="tab-button"><i class="fas fa-upload"></i> Importer</button>
+    <button onclick="openTab('compte')" class="tab-button"><i class="fas fa-user"></i> Compte</button>
   </div>
 
   <div id="maps" class="tab-content">
@@ -20,11 +22,11 @@
   <div id="tracks" class="tab-content" style="display: none;">
     <iframe src="tracks.html" style="width: 100%; height: 500px; border: none;"></iframe>
   </div>
-  <div id="export" class="tab-content" style="display: none;">
-    <iframe src="export.html" style="width: 100%; height: 500px; border: none;"></iframe>
+  <div id="import" class="tab-content" style="display: none;">
+    <iframe src="import.html" style="width: 100%; height: 500px; border: none;"></iframe>
   </div>
   <div id="compte" class="tab-content" style="display: none;">
-    <iframe src="compte.html" style="width: 100%; height: 500px; border: none;"></iframe>
+    <iframe src="account.html" style="width: 100%; height: 500px; border: none;"></iframe>
   </div>
 
   <script>
@@ -33,7 +35,12 @@
       for (let i = 0; i < tabs.length; i++) {
         tabs[i].style.display = "none";
       }
+      const buttons = document.getElementsByClassName("tab-button");
+      for (let i = 0; i < buttons.length; i++) {
+        buttons[i].classList.remove("active");
+      }
       document.getElementById(tabName).style.display = "block";
+      event.target.classList.add("active");
     }
   </script>
 </body>
