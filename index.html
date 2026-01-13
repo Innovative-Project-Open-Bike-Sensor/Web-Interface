@@ -10,9 +10,9 @@
 <body class="main-page">
   <header>
     <nav>
-      <span class="logo" onclick="openTab('home')">Open Bike Sensor</span> | 
-      <a onclick="openTab('maps')" class="nav-link">Maps</a> | 
-      <a onclick="openTab('tracks')" class="nav-link">Tracks</a> | 
+      <span class="logo" onclick="openTab('home')">Open Bike Sensor</span> |
+      <a onclick="openTab('maps')" class="nav-link">Maps</a> |
+      <a onclick="openTab('tracks')" class="nav-link">Tracks</a> |
       <a onclick="openTab('import')" class="nav-link">Import</a>
     </nav>
     <button id="account-btn" onclick="openTab('account')" class="account-btn"><i class="fas fa-user"></i> Account</button>
@@ -23,19 +23,42 @@
     <img src="assets/doc/test_bench.png" alt="Test bench" style="margin-top: 20px; border-radius: 10px;">
   </div>
   <div id="maps" class="tab-content" style="display: none;">
-    <iframe src="maps.html" style="width: 100%; height: 600px; border: none;"></iframe>
+    <iframe id="maps-iframe" src="maps.html" style="width: 100%; height: 600px; border: none;"></iframe>
   </div>
   <div id="tracks" class="tab-content" style="display: none;">
-    <iframe src="tracks.html" style="width: 100%; height: 600px; border: none;"></iframe>
+    <iframe id="tracks-iframe" src="tracks.html" style="width: 100%; height: 600px; border: none;"></iframe>
   </div>
   <div id="import" class="tab-content" style="display: none;">
-    <iframe src="import.html" style="width: 100%; height: 600px; border: none;"></iframe>
+    <iframe id="import-iframe" src="import.html" style="width: 100%; height: 600px; border: none;"></iframe>
   </div>
   <div id="account" class="tab-content" style="display: none;">
-    <iframe src="account.html" style="width: 100%; height: 600px; border: none;"></iframe>
+    <iframe id="account-iframe" src="account.html" style="width: 100%; height: 600px; border: none;"></iframe>
   </div>
 
   <script>
+    // Écoute les messages des iframes
+    window.addEventListener('message', (event) => {
+      // Vérifie l'origine pour des raisons de sécurité (optionnel mais recommandé)
+      // if (event.origin !== "https://ton-domaine.com") return;
+
+      if (event.data.action === 'openTab') {
+        openTab(event.data.tab);
+      } else if (event.data.action === 'loginSuccess') {
+        // Met à jour l'état de connexion dans toutes les iframes
+        const iframes = document.querySelectorAll('iframe');
+        iframes.forEach(iframe => {
+          iframe.contentWindow.postMessage({ action: 'loginSuccess' }, '*');
+        });
+      } else if (event.data.action === 'logoutSuccess') {
+        // Met à jour l'état de déconnexion dans toutes les iframes
+        const iframes = document.querySelectorAll('iframe');
+        iframes.forEach(iframe => {
+          iframe.contentWindow.postMessage({ action: 'logoutSuccess' }, '*');
+        });
+      }
+    });
+
+    // Fonction pour ouvrir un onglet
     function openTab(tabName) {
       const tabs = document.getElementsByClassName("tab-content");
       for (let i = 0; i < tabs.length; i++) {
@@ -49,5 +72,3 @@
   </footer>
 </body>
 </html>
-
-

@@ -15,6 +15,7 @@
       <input type="password" id="password" required>
       <button type="submit">Login</button>
     </form>
+    <p id="login-error" style="color: red; display: none;"></p>
   </div>
 
   <div id="user-panel" style="display: none;">
@@ -33,6 +34,7 @@
       <button type="submit">Update</button>
       <button type="button" id="cancel-change">Cancel</button>
     </form>
+    <p id="change-password-error" style="color: red; display: none;"></p>
   </div>
 
   <script>
@@ -41,63 +43,155 @@
     const changePasswordForm = document.getElementById('change-password-form');
     const userNameSpan = document.getElementById('user-name');
     const importsList = document.getElementById('imports-list');
+    const loginError = document.getElementById('login-error');
+    const changePasswordError = document.getElementById('change-password-error');
 
-    // Check if logged in
+    // Vérifie si l'utilisateur est connecté
     if (localStorage.getItem('loggedIn') === 'true') {
-      showUserPanel();
+      checkLoginStatus();
     }
 
-    document.getElementById('login').addEventListener('submit', function(e) {
+    // Soumission du formulaire de login
+    document.getElementById('login').addEventListener('submit', async function(e) {
       e.preventDefault();
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
-      if (username && password) {
-        localStorage.setItem('loggedIn', 'true');
-        localStorage.setItem('user', username);
-        localStorage.setItem('imports', JSON.stringify([]));
-        showUserPanel();
+
+      try {
+        const response = await fetch('https://lilied-subprofessionally-mafalda.ngrok-free.dev/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: username, password: password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('loggedIn', 'true');
+          localStorage.setItem('user', username);
+          showUserPanel(username);
+          window.parent.postMessage({ action: 'loginSuccess' }, '*');
+        } else {
+          loginError.textContent = data.error || 'Login failed.';
+          loginError.style.display = 'block';
+        }
+      } catch (error) {
+        loginError.textContent = 'Network error. Please try again.';
+        loginError.style.display = 'block';
       }
     });
 
+    // Vérifie le statut de connexion
+    function checkLoginStatus() {
+      const username = localStorage.getItem('user');
+      if (!username) return;
+
+      showUserPanel(username);
+    }
+
+    // Affiche le panneau utilisateur
+    function showUserPanel(username) {
+      userNameSpan.textContent = username;
+      loginForm.style.display = 'none';
+      userPanel.style.display = 'block';
+      loadImports();
+    }
+
+    // Charge la liste des imports depuis le serveur
+    async function loadImports() {
+      try {
+        const response = await fetch('https://lilied-subprofessionally-mafalda.ngrok-free.dev/api/measurements?limit=100', {
+          headers: {
+            'X-API-KEY': 'openbikecle',
+            'ngrok-skip-browser-warning': 'true'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+
+        const contentType = response.headers.get('Content-Type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Réponse non-JSON reçue');
+        }
+
+        const imports = await response.json();
+        importsList.innerHTML = '';
+
+        if (imports.length === 0) {
+          importsList.innerHTML = '<li>Aucune donnée importée.</li>';
+          return;
+        }
+
+        imports.forEach(imp => {
+          const li = document.createElement('li');
+          li.textContent = `Track at (${imp.lat}, ${imp.lng}) on ${imp.day}/${imp.month}/${imp.year}`;
+          importsList.appendChild(li);
+        });
+      } catch (error) {
+        console.error('Erreur chargement imports:', error);
+        importsList.innerHTML = '<li>Erreur de chargement des données.</li>';
+      }
+    }
+
+    // Bouton pour changer le mot de passe
     document.getElementById('change-password-btn').addEventListener('click', function() {
       userPanel.style.display = 'none';
       changePasswordForm.style.display = 'block';
     });
 
+    // Annuler le changement de mot de passe
     document.getElementById('cancel-change').addEventListener('click', function() {
       changePasswordForm.style.display = 'none';
       userPanel.style.display = 'block';
     });
 
-    document.getElementById('change-password').addEventListener('submit', function(e) {
+    // Soumission du formulaire de changement de mot de passe
+    document.getElementById('change-password').addEventListener('submit', async function(e) {
       e.preventDefault();
       const newPassword = document.getElementById('new-password').value;
-      alert('Password changed!');
-      changePasswordForm.style.display = 'none';
-      userPanel.style.display = 'block';
+      const username = localStorage.getItem('user');
+
+      try {
+        const response = await fetch('https://lilied-subprofessionally-mafalda.ngrok-free.dev/auth/change-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true'
+          },
+          body: JSON.stringify({ id: username, password: newPassword })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert('Mot de passe changé avec succès !');
+          changePasswordForm.style.display = 'none';
+          userPanel.style.display = 'block';
+        } else {
+          changePasswordError.textContent = data.error || 'Échec du changement de mot de passe.';
+          changePasswordError.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Erreur réseau:', error);
+        changePasswordError.textContent = 'Erreur réseau. Vérifie la console.';
+        changePasswordError.style.display = 'block';
+      }
     });
 
+    // Déconnexion
     document.getElementById('logout-btn').addEventListener('click', function() {
+      logout();
+    });
+
+    function logout() {
       localStorage.removeItem('loggedIn');
       localStorage.removeItem('user');
       userPanel.style.display = 'none';
       loginForm.style.display = 'block';
-    });
-
-    function showUserPanel() {
-      const user = localStorage.getItem('user');
-      userNameSpan.textContent = user;
-      const imports = JSON.parse(localStorage.getItem('imports') || '[]');
-      importsList.innerHTML = '';
-      imports.forEach(imp => {
-        const li = document.createElement('li');
-        li.textContent = imp;
-        importsList.appendChild(li);
-      });
-      loginForm.style.display = 'none';
-      userPanel.style.display = 'block';
+      window.parent.postMessage({ action: 'logoutSuccess' }, '*');
     }
   </script>
-
 </body>
 </html>
