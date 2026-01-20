@@ -25,6 +25,7 @@ const map = L.map("map").setView([43.6001, 1.4419], 13);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(map);
 
 let currentLayer = null;
+let currentMarkers = null;
 
 function toTimestamp(p) { return new Date(p.year, p.month - 1, p.day, p.hour, p.minute, p.second).getTime(); }
 
@@ -43,9 +44,43 @@ function groupIntoTraces(points, maxGapSeconds) {
 }
 
 function showTrace(trace) {
-  if (currentLayer) map.removeLayer(currentLayer);
+  if (currentLayer) {
+    map.removeLayer(currentLayer);
+  }
+  if (currentMarkers) {
+    currentMarkers.forEach(marker => map.removeLayer(marker));
+  }
+
+  // Dessiner la polyline pour relier les points
   const coords = trace.map(p => [p.lat, p.lng]);
-  currentLayer = L.polyline(coords, { color: "#2563eb", weight: 4 }).addTo(map);
+  currentLayer = L.polyline(coords, {
+    color: "#2563eb",
+    weight: 4
+  }).addTo(map);
+
+  // Ajouter des marqueurs pour chaque point avec un popup
+  currentMarkers = trace.map(p => {
+    const marker = L.circleMarker([p.lat, p.lng], {
+      radius: 7,
+      fillColor: "#2563eb",
+      color: "#000",
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 0.8,
+      className: 'trace-marker'
+    }).addTo(map);
+
+    // Ajouter un popup avec les infos du point
+    marker.bindPopup(`
+      <strong>Date</strong> : ${p.day}/${p.month}/${p.year}<br>
+      <strong>Heure</strong> : ${p.hour}:${p.minute}:${p.second}<br>
+      <strong>Vitesse</strong> : ${p.speed_kmh ? p.speed_kmh.toFixed(1) : 'N/A'} km/h<br>
+      <strong>Distance</strong> : ${p.distanceMin_cm ? p.distanceMin_cm : 'N/A'} cm
+    `);
+
+    return marker;
+  });
+
   map.fitBounds(currentLayer.getBounds());
 }
 
@@ -57,7 +92,7 @@ async function loadTraces() {
     const traces = groupIntoTraces(data, MAX_GAP_SECONDS);
     const list = document.getElementById("list");
     list.innerHTML = ""; // Vider avant de charger
-    
+
     traces.forEach((trace) => {
       const btn = document.createElement("button");
       btn.className = "trace-item";
@@ -68,7 +103,6 @@ async function loadTraces() {
   } catch(err) { console.error(err); }
 }
 
-// ECOUTER LE SIGNAL DE MISE A JOUR
 window.addEventListener('message', (event) => {
   if (event.data.action === 'refreshData') {
     loadTraces();
