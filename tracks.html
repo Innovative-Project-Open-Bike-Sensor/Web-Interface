@@ -5,6 +5,31 @@
   <title>Tracks</title>
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    .trace-item-container {
+      margin-bottom: 8px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .trace-item, .download-item {
+      padding: 6px 12px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+    }
+    .trace-item {
+      background-color: #2563eb;
+      color: white;
+    }
+    .download-item {
+      background-color: #10b981;
+      color: white;
+    }
+    .download-item.csv {
+      background-color: #6b7280;
+    }
+  </style>
 </head>
 <body class="iframe-page">
 <div id="container">
@@ -51,14 +76,12 @@ function showTrace(trace) {
     currentMarkers.forEach(marker => map.removeLayer(marker));
   }
 
-  // Dessiner la polyline pour relier les points
   const coords = trace.map(p => [p.lat, p.lng]);
   currentLayer = L.polyline(coords, {
     color: "#2563eb",
     weight: 4
   }).addTo(map);
 
-  // Ajouter des marqueurs pour chaque point avec un popup
   currentMarkers = trace.map(p => {
     const marker = L.circleMarker([p.lat, p.lng], {
       radius: 7,
@@ -70,7 +93,6 @@ function showTrace(trace) {
       className: 'trace-marker'
     }).addTo(map);
 
-    // Ajouter un popup avec les infos du point
     marker.bindPopup(`
       <strong>Date</strong> : ${p.day}/${p.month}/${p.year}<br>
       <strong>Heure</strong> : ${p.hour}:${p.minute}:${p.second}<br>
@@ -84,6 +106,32 @@ function showTrace(trace) {
   map.fitBounds(currentLayer.getBounds());
 }
 
+function downloadTraceAsJson(trace, filename) {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(trace, null, 2));
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", filename + ".json");
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
+
+function downloadTraceAsCsv(trace, filename) {
+  // Convert trace to CSV format
+  let csv = "lat,lng,day,month,year,hour,minute,second,speed_kmh,distanceMin_cm\n";
+  trace.forEach(point => {
+    csv += `${point.lat},${point.lng},${point.day},${point.month},${point.year},${point.hour},${point.minute},${point.second},${point.speed_kmh || 'N/A'},${point.distanceMin_cm || 'N/A'}\n`;
+  });
+
+  const dataStr = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", filename + ".csv");
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
+
 async function loadTraces() {
   try {
     const response = await fetch(API_URL, { headers: { "X-API-KEY": API_KEY, "ngrok-skip-browser-warning": "true" } });
@@ -91,14 +139,31 @@ async function loadTraces() {
     data = data.filter(p => p.valid === 1);
     const traces = groupIntoTraces(data, MAX_GAP_SECONDS);
     const list = document.getElementById("list");
-    list.innerHTML = ""; // Vider avant de charger
+    list.innerHTML = "";
 
-    traces.forEach((trace) => {
+    traces.forEach((trace, index) => {
+      const div = document.createElement("div");
+      div.className = "trace-item-container";
+
       const btn = document.createElement("button");
       btn.className = "trace-item";
       btn.innerText = `${trace[0].day}/${trace[0].month} - ${trace.length} pts`;
       btn.onclick = () => showTrace(trace);
-      list.appendChild(btn);
+
+      const downloadJsonBtn = document.createElement("button");
+      downloadJsonBtn.className = "download-item";
+      downloadJsonBtn.innerText = "Download JSON";
+      downloadJsonBtn.onclick = () => downloadTraceAsJson(trace, `trace_${index}`);
+
+      const downloadCsvBtn = document.createElement("button");
+      downloadCsvBtn.className = "download-item csv";
+      downloadCsvBtn.innerText = "Download CSV";
+      downloadCsvBtn.onclick = () => downloadTraceAsCsv(trace, `trace_${index}`);
+
+      div.appendChild(btn);
+      div.appendChild(downloadJsonBtn);
+      div.appendChild(downloadCsvBtn);
+      list.appendChild(div);
     });
   } catch(err) { console.error(err); }
 }
